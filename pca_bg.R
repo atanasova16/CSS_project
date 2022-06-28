@@ -8,6 +8,10 @@ bul$foreign_direct_investment_euro <- as.double(bul$foreign_direct_investment_eu
 apply(bul[,-1], 2, mean)
 plot(apply(bul[,-1], 2, mean))
 
+library(ggplot2)
+library(ggcorrplot)
+ggcorrplot(cor(bul[,-1]), hc.order = TRUE, type = "lower", tl.srt = 90, tl.cex = 8)
+cor_pmat(bul[,-1])
 
 pr.out <- prcomp(bul[,-1] , scale = TRUE)
 plot(pr.out)
@@ -38,6 +42,34 @@ plot(cumsum(pve), xlab = "Principal Component",
        ylim = c(0, 1), type = "b")
 
 
+library(ggpubr)
+
+
+p1 <- ggplot(data = as.data.frame(pve), aes(x = seq(1:28), y = pve)) + 
+        geom_point() +
+        #geom_line() +
+        #geom_segment(aes(x = 5, y = 0, xend = 5, yend = pve[5])) +
+        #geom_segment(aes(x = 0, y = pve[5], xend = 5, yend = pve[5])) +
+        xlab("Principal Component") +
+        ylab("Proportion of Variance Explained") +
+        scale_x_continuous(expand = c(0.01,0)) +
+        scale_y_continuous(expand = c(0.05, 0), limits = c(0,1)) +
+        theme_classic() 
+
+p2 <- ggplot(data = as.data.frame(cumsum(pve)), aes(x = seq(1:28), y = cumsum(pve))) + 
+        geom_point() +
+        geom_line() +
+        geom_segment(aes(x = 5, y = 0, xend = 5, yend = cumsum(pve)[5])) +
+        geom_segment(aes(x = 0, y = cumsum(pve)[5], xend = 5, yend = cumsum(pve)[5])) +
+        xlab("Principal Component") +
+        ylab("Cumulative Proportion of Variance Explained") +
+        scale_x_continuous(expand = c(0,0)) +
+        scale_y_continuous(expand = c(0, 0)) +
+        theme_classic()
+
+ggarrange(p1, p2)
+
+
 par(mfrow = c(1,1))
 
 comp <- data.frame(pr.out$x[,1:5])
@@ -47,7 +79,6 @@ write.csv(comp, "C:/Users/User/Documents/UNITN/Computational social science/bulg
 # Plot
 plot(comp, pch=16, col=rgb(0,0,0,0.5))
 
-#2-D projections of data which are in a 4-D space. 
 #You can see there's a clear outlier in all the dimensions, as well as some bunching together in the different projections.
 
 summary(pr.out)
@@ -61,7 +92,7 @@ fviz_nbclust(bul_transform, kmeans, method = 'gap_stat')
 
 k = 4
 kmeans_bul = kmeans(bul_transform, centers = k, nstart = 20)
-fviz_cluster(kmeans_bul, data = bul_transform)
+fviz_cluster(kmeans_bul, data = bul_transform) + theme_classic()
 
 
 k <- kmeans(comp, 4, nstart=25, iter.max=1000)
@@ -100,14 +131,16 @@ boxplot(bul$employment_rate ~ bul_with_labels$kmeans4,
 #plot(hc, labels = scaled$Region)
 #labs_hc4 <- cutree(hc, 4)
 
+rownames(scaled) <- scaled$Region
+rownames(bul_transform) <- scaled$Region
+
 #HCLUST WITH PCA
 distmatrix2 <- dist(bul_transform)
 hc2 <- hclust(distmatrix2, method = "complete")
 plot(hc2, labels = scaled$Region)
 labs_pca_hc4 <- cutree(hc, 4)
 
-rownames(scaled) <- scaled$Region
-rownames(bul_transform) <- scaled$Region
+
 #hc2$labels <- as.vector(bul_with_labels[hc2$order, 'Region'])
 fviz_dend(hc2,cex = 0.5, k = 4,rect = TRUE)
 
@@ -128,15 +161,13 @@ labs_pca_hc4 == clusters_kmeans4
 sum(labs_pca_hc4 == clusters_kmeans4)
 table(labs_pca_hc4, clusters_kmeans4)
 bul_with_labels$labs_pca_hc4 <- as.factor(labs_pca_hc4)
-
+scaled$labs_pca_hc4 <- as.factor(labs_pca_hc4)
 
 #ARI, but first align the clusters labels!!
 mclust::adjustedRandIndex(clusters_kmeans4, labs_pca_hc4)
 #describe what it is and how it is calculated
 
 
-
-scaled$labs_pca_hc4 <- as.factor(labs_pca_hc4)
 
 par(mfrow = c(1,2))
 
