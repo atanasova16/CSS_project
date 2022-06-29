@@ -158,7 +158,7 @@ set.seed(21)
 distmatrix2 <- dist(bul_transform)
 hc2 <- hclust(distmatrix2, method = "complete")
 plot(hc2, labels = scaled$Region)
-labs_pca_hc4 <- cutree(hc, 4)
+labs_pca_hc4 <- cutree(hc2, 4)
 
 
 #hc2$labels <- as.vector(bul_with_labels[hc2$order, 'Region'])
@@ -310,7 +310,7 @@ plot(out, xvar = "lambda", label = TRUE)
 
 
 ```{r}
-#write.csv(bul_with_labels, "C:/Users/User/Documents/UNITN/Computational social science/bulgaria/bul_with_labels.csv")
+write.csv(bul_with_labels, "C:/Users/User/Documents/UNITN/Computational social science/bulgaria/bul_with_labels.csv")
 ```
 
 
