@@ -284,7 +284,7 @@ x_test <- model.matrix(employment_rate ~ .-Region-labs_pca_hc4 - kmeans4, data =
 ```
 
 ```{r}
-
+set.seed(21)
 cv.las <- cv.glmnet(x_train, y_train, alpha = 1, nfolds = 5)
 
 las <- glmnet(x_train, y_train, alpha = 1)
@@ -307,6 +307,27 @@ print(las_pred[las_pred != 0]) # These are the most important variables
 
 plot(out, xvar = "lambda", label = TRUE)
 ```
+```{r}
+set.seed(21)
+cv.ridg <- cv.glmnet(x_train, y_train, alpha = 0, nfolds = 5)
+
+ridg <- glmnet(x_train, y_train, alpha = 0)
+
+plot(cv.ridg)
+bestlam = cv.ridg$lambda.min
+
+ridg_predict <- predict(ridg, s = bestlam, newx = x_test)
+mean((ridg_predict - y_test)^2)
+
+out <- glmnet(x, y, alpha = 0)
+ridg_pred <- predict(out, type = "coefficients", s = bestlam)[1:28,]
+ridg_pred
+ 
+plot(out, xvar = "lambda", label = TRUE)
+
+```
+
+
 
 
 ```{r}
