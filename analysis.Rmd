@@ -307,6 +307,33 @@ print(las_pred[las_pred != 0]) # These are the most important variables
 
 plot(out, xvar = "lambda", label = TRUE)
 ```
+
+```{r}
+
+one_x <- model.matrix(employment_rate ~ .-Region-labs_pca_hc4 - kmeans4, data = scaled)[1,-c(16,29,30,31)]
+prediction_new_observation <- predict(out, s = bestlam, newx = one_x)
+#This is normalized, so to get employment rate, need to "de-normalize"
+mean_empl_rate <- mean(bul_with_labels$employment_rate)
+stdev_empl_rate <- sqrt(var(bul_with_labels$employment_rate))
+one_y <- prediction_new_observation*stdev_empl_rate + mean_empl_rate
+(prediction_new_observation - scaled[1,16])^2 #error for this one
+
+#Let's see what will happen if we increase the activity rate with say 10%
+new_x <- bul_with_labels[c(1,2,3),]
+new_x$activity_rate <- new_x$activity_rate + 10 
+new_x_scaled <- scaled[c(1,2,3),]
+new_x_scaled$activity_rate <- (new_x$activity_rate - mean(bul_with_labels$activity_rate))/sqrt(var(bul_with_labels$activity_rate))
+new_x_scaled_mm <- model.matrix(employment_rate ~ .-Region-labs_pca_hc4 - kmeans4, data = new_x_scaled)[,-c(16,29,30,31)]
+new_scaled_predictions <- predict(out, s = bestlam, newx = new_x_scaled_mm)
+new_predictions <- new_scaled_predictions*stdev_empl_rate + mean_empl_rate
+
+#To see the change in the first three cities for example:
+bul_with_labels[c(1,2,3),c(1,17)] #this would be before
+new_predictions #after increase in activity rate with 10%
+
+```
+
+
 ```{r}
 set.seed(21)
 cv.ridg <- cv.glmnet(x_train, y_train, alpha = 0, nfolds = 5)
