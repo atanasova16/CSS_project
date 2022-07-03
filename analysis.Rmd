@@ -263,12 +263,71 @@ bul_with_labels$Region[bul_with_labels$kmeans4 == 2 & bul_with_labels$labs_pca_h
 ```
 
 
-#Lasso regression
+#Lasso and Ridge regression
+
+Nested Cross Validation: model selection and model asessment. To choose the optimal lambda, and to have a picture of the medium test error rate.
 
 ```{r}
-#Trying lasso regression on one of the most important variables for both kmeans and hclust: employment rate!
+library(caret)
 library(glmnet)
 
+set.seed(21)
+outfolds <- caret::createFolds(scaled$employment_rate ,k = 5, returnTrain = FALSE)
+errors_folds_las <- c()
+ errors_folds_rid <- c()
+
+for (outfold in outfolds){
+        tr <- scaled[-outfold,]
+        ts <- scaled[outfold,]
+        y_test <- scaled[outfold,16]
+        y_train <- scaled[-outfold,16]
+        x_train <- model.matrix(employment_rate ~ .-Region-labs_pca_hc4 - kmeans4, data = tr)[,-c(16,29,30,31)]
+        x_test <- model.matrix(employment_rate ~ .-Region-labs_pca_hc4 - kmeans4, data = ts)[,-c(16,29,30,31)]
+        #print(colnames(x_train))
+        cv.las <- cv.glmnet(x_train, y_train, alpha = 1, nfolds = 5)
+
+        las <- glmnet(x_train, y_train, alpha = 1)
+
+        plot(cv.las)
+        bestlam = cv.las$lambda.min
+
+        las_predict <- predict(las, s = bestlam, newx = x_test)
+        #print(las_predict)
+        #print(dim(las_predict))
+        #print(y_test)
+        #print(length(y_test))
+        err <- mean((as.data.frame(las_predict)$s1 - y_test)^2)
+        print(err)
+        errors_folds_las <- c(errors_folds_las, err)
+        
+        #RIDGE
+        cv.rid <- cv.glmnet(x_train, y_train, alpha = 0, nfolds = 5)
+
+        rid <- glmnet(x_train, y_train, alpha = 0)
+
+        plot(cv.rid)
+        bestlam = cv.rid$lambda.min
+
+        rid_predict <- predict(rid, s = bestlam, newx = x_test)
+        #print(las_predict)
+        #print(dim(las_predict))
+        #print(y_test)
+        #print(length(y_test))
+        err2 <- mean((as.data.frame(rid_predict)$s1 - y_test)^2)
+        print(err2)
+        errors_folds_rid <- c(errors_folds_rid, err2)
+        
+}
+
+#The estimate of the error of the models are:
+mean(errors_folds_las)
+mean(errors_folds_rid)
+
+```
+
+Just one train-test separation
+
+```{r}
 y <- scaled$employment_rate
 
 set.seed(21)
@@ -295,10 +354,12 @@ bestlam = cv.las$lambda.min
 las_predict <- predict(las, s = bestlam, newx = x_test)
 mean((las_predict - y_test)^2) #test error based on one split train-test
 ```
-
+Fit lasso on full dataset, final model to be used
 ```{r}
-#Fit lasso on full dataset
+out.cv <- cv.glmnet(x, y, alpha = 1, nfolds = 5)
+bestlam <- out.cv$lambda.min
 out <- glmnet(x, y, alpha = 1)
+
 las_pred <- predict(out, type = "coefficients", s = bestlam)[1:28,]
 las_pred
  
@@ -307,6 +368,9 @@ print(las_pred[las_pred != 0]) # These are the most important variables
 
 plot(out, xvar = "lambda", label = TRUE)
 ```
+
+
+Some predictions
 
 ```{r}
 
@@ -346,11 +410,15 @@ bestlam = cv.ridg$lambda.min
 ridg_predict <- predict(ridg, s = bestlam, newx = x_test)
 mean((ridg_predict - y_test)^2)
 
+out.cv <- cv.glmnet(x, y, alpha = 0, nfolds = 5)
+bestlam <- out.cv$lambda.min
 out <- glmnet(x, y, alpha = 0)
 ridg_pred <- predict(out, type = "coefficients", s = bestlam)[1:28,]
 ridg_pred
  
 plot(out, xvar = "lambda", label = TRUE)
+
+ridg_pred[order(abs(ridg_pred))] #ordering of the coefficients of variables
 
 ```
 
