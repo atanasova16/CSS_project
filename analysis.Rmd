@@ -324,8 +324,10 @@ for (outfold in outfolds){
         ts <- scaled[outfold,]
         y_test <- scaled[outfold,16]
         y_train <- scaled[-outfold,16]
-        x_train <- model.matrix(employment_rate ~ .-Region-labs_pca_hc4 - kmeans4, data = tr) #[,-c(16,29,30,31)]
-        x_test <- model.matrix(employment_rate ~ .-Region-labs_pca_hc4 - kmeans4, data = ts) #[,-c(16,29,30,31)]
+        
+        #takinga as a variable the region according to kmeans
+        x_train <- model.matrix(employment_rate ~ .-Region - labs_pca_hc4, data = tr) #[,-c(16,29,30,31)]
+        x_test <- model.matrix(employment_rate ~ .-Region - labs_pca_hc4, data = ts) #[,-c(16,29,30,31)]
         #print(colnames(x_train))
         cv.las <- cv.glmnet(x_train, y_train, alpha = 1, nfolds = 5)
 
@@ -379,10 +381,10 @@ ts <- -tr
 y_test <- y[ts]
 y_train <- y[tr]
 
-x <- model.matrix(employment_rate ~ .-Region-labs_pca_hc4 - kmeans4, data = scaled) #[,-c(16,29,30,31)]
+x <- model.matrix(employment_rate ~ .-Region-labs_pca_hc4, data = scaled) #[,-c(16,29,30,31)]
 
-x_train <- model.matrix(employment_rate ~ .-Region-labs_pca_hc4 - kmeans4, data = scaled[tr,]) #[,-c(16,29,30,31)]
-x_test <- model.matrix(employment_rate ~ .-Region-labs_pca_hc4 - kmeans4, data = scaled[ts,]) #[,-c(16,29,30,31)]
+x_train <- model.matrix(employment_rate ~ .-Region-labs_pca_hc4, data = scaled[tr,]) #[,-c(16,29,30,31)]
+x_test <- model.matrix(employment_rate ~ .-Region-labs_pca_hc4, data = scaled[ts,]) #[,-c(16,29,30,31)]
 ```
 
 ```{r}
@@ -403,11 +405,12 @@ out.cv <- cv.glmnet(x, y, alpha = 1, nfolds = 5)
 bestlam <- out.cv$lambda.min
 out <- glmnet(x, y, alpha = 1)
 
-las_pred <- predict(out, type = "coefficients", s = bestlam)[1:28,]
+las_pred <- predict(out, type = "coefficients", s = bestlam)[1:32,]
 las_pred
  
 print(las_pred[las_pred != 0]) # These are the most important variables
-#Again we see that activity rate and wastewater is very important, but also ecological assets
+#Again we see that activity rate is very important, but also ecological assets
+#also region cluster!
 
 plot(out, xvar = "lambda", label = TRUE)
 ```
@@ -417,7 +420,7 @@ Some predictions
 
 ```{r}
 
-one_x <- model.matrix(employment_rate ~ .-Region-labs_pca_hc4 - kmeans4, data = scaled)[1,] #[1,-c(16,29,30,31)]
+one_x <- model.matrix(employment_rate ~ .-Region - labs_pca_hc4, data = scaled)[1,] #[1,-c(16,29,30,31)]
 prediction_new_observation <- predict(out, s = bestlam, newx = one_x)
 #This is normalized, so to get employment rate, need to "de-normalize"
 mean_empl_rate <- mean(bul_with_labels$employment_rate)
@@ -430,7 +433,7 @@ new_x <- bul_with_labels[c(1,2,3),]
 new_x$activity_rate <- new_x$activity_rate + 10 
 new_x_scaled <- scaled[c(1,2,3),]
 new_x_scaled$activity_rate <- (new_x$activity_rate - mean(bul_with_labels$activity_rate))/sqrt(var(bul_with_labels$activity_rate))
-new_x_scaled_mm <- model.matrix(employment_rate ~ .-Region-labs_pca_hc4 - kmeans4, data = new_x_scaled) #[,-c(16,29,30,31)]
+new_x_scaled_mm <- model.matrix(employment_rate ~ .-Region-labs_pca_hc4, data = new_x_scaled) #[,-c(16,29,30,31)]
 new_scaled_predictions <- predict(out, s = bestlam, newx = new_x_scaled_mm)
 new_predictions <- new_scaled_predictions*stdev_empl_rate + mean_empl_rate
 
@@ -456,7 +459,7 @@ mean((ridg_predict - y_test)^2)
 out.cv <- cv.glmnet(x, y, alpha = 0, nfolds = 5)
 bestlam <- out.cv$lambda.min
 out <- glmnet(x, y, alpha = 0)
-ridg_pred <- predict(out, type = "coefficients", s = bestlam)[1:28,]
+ridg_pred <- predict(out, type = "coefficients", s = bestlam)[1:32,]
 ridg_pred
  
 plot(out, xvar = "lambda", label = TRUE)
