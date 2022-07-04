@@ -144,6 +144,15 @@ boxplot(bul_with_labels$connected_to_wastewater_collecting ~ bul_with_labels$kme
 boxplot(bul$employment_rate ~ bul_with_labels$kmeans4,
         xlab='Cluster', ylab='employment_rate',
         main='employment_rate by Cluster')
+
+ggplot(bul_with_labels, aes(x=kmeans4, y=connected_to_wastewater_collecting, fill = kmeans4)) +
+    geom_boxplot(varwidth = TRUE, alpha=0.5) +
+    theme(legend.position="none") +
+        scale_fill_manual(values = c("#f6d543", "#c53c74", "#2f0a5b", "#f98e09")) +
+        theme_classic() +
+        ggtitle("Connection to wastewater collection system by cluster")
+
+
 ```
 
 ```{r}
@@ -226,6 +235,40 @@ boxplot(bul$activity_rate ~ bul_with_labels$labs_pca_hc4,
 
 par(mfrow = c(1,1))
 ```
+
+```{r}
+p1 <- ggplot(bul_with_labels, aes(x=kmeans4, y=employment_rate, fill = kmeans4)) +
+    geom_boxplot(varwidth = TRUE, alpha=0.5) +
+    theme(legend.position="none") +
+        scale_fill_manual(values = c("#f6d543", "#c53c74", "#2f0a5b", "#f98e09")) +
+        theme_classic() +
+        ggtitle("Employment rate by cluster K-means")
+p2 <- ggplot(bul_with_labels, aes(x=labs_pca_hc4, y=employment_rate, fill = labs_pca_hc4)) +
+    geom_boxplot(varwidth = TRUE, alpha=0.5) +
+    theme(legend.position="none") +
+        scale_fill_manual(values = c("#f6d543", "#c53c74", "#2f0a5b", "#f98e09")) +
+        theme_classic() +
+        ggtitle("Employment rate by cluster Hierarchical clustering")
+ggarrange(p1, p2)
+
+p1 <- ggplot(bul_with_labels, aes(x=kmeans4, y=activity_rate, fill = kmeans4)) +
+    geom_boxplot(varwidth = TRUE, alpha=0.5) +
+    theme(legend.position="none") +
+        scale_fill_manual(values = c("#f6d543", "#c53c74", "#2f0a5b", "#f98e09")) +
+        theme_classic() +
+        ggtitle("Activity rate by cluster K-means")
+p2 <- ggplot(bul_with_labels, aes(x=labs_pca_hc4, y=activity_rate, fill = labs_pca_hc4)) +
+    geom_boxplot(varwidth = TRUE, alpha=0.5) +
+    theme(legend.position="none") +
+        scale_fill_manual(values = c("#f6d543", "#c53c74", "#2f0a5b", "#f98e09")) +
+        theme_classic() +
+        ggtitle("Activity rate by cluster Hierarchical clustering")
+
+
+ggarrange(p1, p2)
+```
+
+
 
 ```{r}
 ggplot(bul_with_labels, aes(Population2021, colour = kmeans4)) +
